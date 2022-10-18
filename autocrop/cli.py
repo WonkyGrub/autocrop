@@ -44,7 +44,8 @@ def main(
     fheight: int = 500,
     fwidth: int = 500,
     facePercent: int = 50,
-    resize: bool = True,
+    resize: bool = False,
+    cropmix: float = 0.5,
 ) -> None:
     """
     Crops folder of images to the desired height and width if a
@@ -98,7 +99,7 @@ def main(
 
     # Main loop
     cropper = Cropper(
-        width=fwidth, height=fheight, face_percent=facePercent, resize=resize
+        width=fwidth, height=fheight, face_percent=facePercent, resize=resize, cropmix=cropmix,
     )
     for input_filename in input_files:
         basename = os.path.basename(input_filename)
@@ -171,6 +172,19 @@ def size(i):
     else:
         raise argparse.ArgumentTypeError(error)
 
+def Notsize(i):
+    """Returns valid only if input is a positive integer under 1e5"""
+    error = "Invalid pixel size"
+    try:
+        i = int(i)
+    except ValueError:
+        raise argparse.ArgumentTypeError(error)
+    if i > -0.99 and i < 101:
+        return i
+    else:
+        raise argparse.ArgumentTypeError(error)
+
+
 
 def compat_input(s=""):  # pragma: no cover
     """Compatibility function to permit testing for Python 2 and 3."""
@@ -236,6 +250,7 @@ def parse_args(args):
         "facePercent": "Percentage of face to image height",
         "no_resize": """Do not resize images to the specified width and height,
                       but instead use the original image's pixels.""",
+        "cropmix": "cropmix between 0-100, 0 being full face crop, 1 being center crop",
     }
 
     parser = argparse.ArgumentParser(description=help_d["desc"])
@@ -279,6 +294,9 @@ def parse_args(args):
     parser.add_argument(
         "-e", "--extension", type=chk_extension, default=None, help=help_d["extension"]
     )
+    parser.add_argument(
+        "--cropmix", "-c", type=size, default=0.5, help=help_d["cropmix"]
+    )    
 
     return parser.parse_args()
 
@@ -308,4 +326,5 @@ def command_line_interface():
         args.width,
         args.facePercent,
         resize,
+        args.cropmix,
     )
